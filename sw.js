@@ -1,4 +1,4 @@
-const cacheName = 'instagram-clone-v5';
+const cacheName = 'instagram-clone-v6';
 
 const assets = [
   '/',
