@@ -4,50 +4,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>breyny_05 • Instagram</title>
-<link rel="manifest" href="manifest.json">
 <style>
-body{margin:0;font-family:Arial;background:#000;color:#fff}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;background:#000;color:#fff}
 .container{max-width:430px;margin:auto}
-.topbar{display:flex;justify-content:space-between;padding:10px}
-.profile{display:flex;padding:10px}
-.profile img{width:80px;height:80px;border-radius:50%}
-.stats{display:flex;gap:15px}
-.highlights{display:flex;gap:10px;overflow:auto;padding:10px}
-.highlight img{width:60px;height:60px;border-radius:50%}
-.post img{width:100%}
+.header{display:flex;align-items:center;padding:15px}
+.profile-pic{width:80px;height:80px;border-radius:50%;border:3px solid #ff0066;object-fit:cover}
+.info{margin-left:15px}
+.username{font-weight:bold;font-size:18px}
+.stats{display:flex;gap:15px;font-size:14px;margin-top:5px}
+.bio{font-size:13px;margin-top:8px}
+.highlights{display:flex;gap:12px;padding:10px;overflow-x:auto}
+.highlight{text-align:center;font-size:12px}
+.highlight img{width:65px;height:65px;border-radius:50%;border:2px solid #555;cursor:pointer}
+
+/* GRID STYLE LIKE INSTAGRAM */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.grid img{width:100%;height:120px;object-fit:cover;cursor:pointer}
+
 .nav{position:fixed;bottom:0;width:100%;max-width:430px;background:#111;display:flex;justify-content:space-around;padding:10px}
+
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column;justify-content:center;align-items:center}
+.modal img{max-width:100%}
+
+.story-controls{position:absolute;top:10px;width:90%;display:flex;justify-content:space-between;color:white}
+button{background:none;border:none;color:white;font-size:20px}
+
+.like{position:absolute;bottom:10px;left:10px;font-size:18px}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="topbar"><b>breyny_05</b><span>❤️</span></div>
 
-<div class="profile">
-<img src="profile.jpg">
-<div>
-<div class="stats"><b>3</b> posts <b>10k</b> followers <b>2k</b> following</div>
-<div>Breyny Stefany De La CS 🦋<br>23 years ago<br>SPM, RD 🌴🇩🇴<br>Mother, cooking and finance</div>
+<div class="header">
+<img src="profile.jpg" class="profile-pic">
+<div class="info">
+<div class="username">breyny_05</div>
+<div class="stats">
+<div><b>3</b> posts</div>
+<div><b>10k</b> followers</div>
+<div><b>2k</b> following</div>
+</div>
+<div class="bio">
+Breyny Stefany De La CS 🦋<br>
+23 years ago<br>
+SPM, RD 🌴🇩🇴<br>
+Mother, cooking and finance
+</div>
 </div>
 </div>
 
 <div class="highlights">
-<img src="food1.jpg">
-<img src="hobby1.jpg">
-<img src="movie1.jpg">
+<div class="highlight" onclick="openStory('food')"><img src="food1.jpg"><div>Food</div></div>
+<div class="highlight" onclick="openStory('hobby')"><img src="hobby1.jpg"><div>Hobbies</div></div>
+<div class="highlight" onclick="openStory('movie')"><img src="movie1.jpg"><div>Movies</div></div>
 </div>
 
-<div class="post"><img src="post1.jpg"><p>Dinner for my birthday with my friends 🙈</p></div>
-<div class="post"><img src="trading.jpg"><p>This is how the charts look today, a great day to update your portfolio 💸</p></div>
-<div class="post"><img src="post3.jpg"><p>Christmas is perfect because you are here ❤️‍🩹</p></div>
+<!-- GRID POSTS LIKE INSTAGRAM PROFILE -->
+<div class="grid">
+<img src="post1.jpg" onclick="openPost(this.src)">
+<img src="trading.jpg" onclick="openPost(this.src)">
+<img src="post3.jpg" onclick="openPost(this.src)">
+</div>
 
 </div>
 
 <div class="nav">🏠 🔍 ➕ ❤️ 👤</div>
 
+<!-- STORY MODAL -->
+<div id="storyModal" class="modal">
+<div class="story-controls">
+<button onclick="prevStory()">⟨</button>
+<button onclick="closeStory()">✕</button>
+<button onclick="nextStory()">⟩</button>
+</div>
+<img id="storyImg">
+</div>
+
+<!-- POST MODAL -->
+<div id="postModal" class="modal" onclick="closePost()">
+<img id="postImg">
+<div class="like" onclick="like(this)">♡ Like</div>
+</div>
+
 <script>
-// Service Worker Register
-if('serviceWorker' in navigator){
- navigator.serviceWorker.register('sw.js');
+const stories={
+ food:['food1.jpg','food2.jpg','food3.jpg'],
+ hobby:['hobby1.jpg','hobby2.jpg','hobby3.jpg'],
+ movie:['movie1.jpg']
+};
+
+let currentStory=[];
+let index=0;
+
+function openStory(type){
+ currentStory=stories[type];
+ index=0;
+ document.getElementById('storyModal').style.display='flex';
+ document.getElementById('storyImg').src=currentStory[index];
+}
+
+function nextStory(){
+ index++;
+ if(index>=currentStory.length){closeStory();}
+ else{document.getElementById('storyImg').src=currentStory[index];}
+}
+
+function prevStory(){
+ index--;
+ if(index<0) index=0;
+ document.getElementById('storyImg').src=currentStory[index];
+}
+
+function closeStory(){
+ document.getElementById('storyModal').style.display='none';
+}
+
+function openPost(src){
+ document.getElementById('postModal').style.display='flex';
+ document.getElementById('postImg').src=src;
+}
+
+function closePost(){
+ document.getElementById('postModal').style.display='none';
+}
+
+function like(el){
+ if(el.innerHTML==='♡ Like'){
+  el.innerHTML='❤️ Liked';
+ }else{
+  el.innerHTML='♡ Like';
+ }
 }
 </script>
 
