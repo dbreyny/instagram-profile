@@ -13,27 +13,31 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;backg
 .username{font-weight:bold;font-size:18px}
 .stats{display:flex;gap:15px;font-size:14px;margin-top:5px}
 .bio{font-size:13px;margin-top:8px}
-.follow-btn{margin-top:8px;padding:6px 12px;border:none;border-radius:6px;background:#3897f0;color:white;cursor:pointer;width:100%}
+.follow-btn{margin-top:8px;padding:6px;border:none;border-radius:6px;background:#3897f0;color:white;width:100%}
 
 .highlights{display:flex;gap:12px;padding:10px;overflow-x:auto}
 .highlight{text-align:center;font-size:12px}
 .highlight img{width:65px;height:65px;border-radius:50%;border:2px solid #555;cursor:pointer}
 
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.grid img{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:pointer}
+.grid img{width:100%;aspect-ratio:1/1;object-fit:cover}
 
 .nav{position:fixed;bottom:0;width:100%;max-width:430px;background:#111;display:flex;justify-content:space-around;padding:10px}
 
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;overflow-y:auto}
-.feed-post{max-width:430px;margin:auto;border-bottom:1px solid #222}
+.feed-post{max-width:430px;margin:auto;border-bottom:1px solid #222;position:relative}
 .feed-post img{width:100%}
-.caption{padding:10px;font-size:14px}
-.actions{padding:5px 10px;font-size:18px}
-.likes{padding:0 10px;font-size:14px}
-.comments{padding:0 10px 10px;font-size:13px;color:#ccc}
-.comment-box{display:flex;padding:10px;border-top:1px solid #222}
-.comment-box input{flex:1;background:#111;border:none;color:white;padding:8px}
-.comment-box button{background:none;border:none;color:#3897f0}
+.heart{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:60px;opacity:0;transition:0.3s}
+.caption{padding:10px}
+.likes{padding:0 10px}
+.comment-box{display:flex;padding:10px}
+.comment-box input{flex:1;background:#111;border:none;color:white}
+.comment-box button{color:#3897f0;background:none;border:none}
+.back-btn{position:fixed;top:10px;left:10px;background:#111;padding:8px;border-radius:8px}
+
+.story-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;justify-content:center;align-items:center}
+.story-modal img{width:100%}
+.story-controls{position:absolute;top:10px;width:90%;display:flex;justify-content:space-between}
 </style>
 </head>
 <body>
@@ -48,20 +52,15 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;backg
 <div><b id="followers">10000</b> followers</div>
 <div><b>2000</b> following</div>
 </div>
-<div class="bio">
-Breyny Stefany De La CS 🦋<br>
-23 years ago<br>
-SPM, RD 🌴🇩🇴<br>
-Mother, cooking and finance
-</div>
+<div class="bio">Breyny Stefany De La CS 🦋<br>23 years ago<br>SPM, RD 🌴🇩🇴<br>Mother, cooking and finance</div>
 <button class="follow-btn" id="followBtn" onclick="toggleFollow()">Follow</button>
 </div>
 </div>
 
 <div class="highlights">
-<div class="highlight"><img src="food1.jpg"><div>Food</div></div>
-<div class="highlight"><img src="hobby1.jpg"><div>Hobbies</div></div>
-<div class="highlight"><img src="movie1.jpg"><div>Movies</div></div>
+<div class="highlight" onclick="openStory('food')"><img src="food1.jpg"><div>Food</div></div>
+<div class="highlight" onclick="openStory('hobby')"><img src="hobby1.jpg"><div>Hobbies</div></div>
+<div class="highlight" onclick="openStory('movie')"><img src="movie1.jpg"><div>Movies</div></div>
 </div>
 
 <div class="grid">
@@ -73,26 +72,26 @@ Mother, cooking and finance
 </div>
 
 <div class="nav">🏠 🔍 ➕ ❤️ 👤</div>
-
 <div id="feedModal" class="modal"></div>
+<div id="backBtn" class="back-btn" style="display:none" onclick="closeFeed()">←</div>
+
+<div id="storyModal" class="story-modal">
+<div class="story-controls">
+<button onclick="prevStory()">⟨</button>
+<button onclick="closeStory()">✕</button>
+<button onclick="nextStory()">⟩</button>
+</div>
+<img id="storyImg">
+</div>
 
 <script>
-let following=false;
-let followersCount=10000;
-
+let following=false,followersCount=10000;
 function toggleFollow(){
- const btn=document.getElementById('followBtn');
- if(!following){
-  following=true;
-  btn.innerText='Following';
-  btn.style.background='#444';
-  followersCount++;
- }else{
-  following=false;
-  btn.innerText='Follow';
-  btn.style.background='#3897f0';
-  followersCount--;
- }
+ let b=document.getElementById('followBtn');
+ following=!following;
+ b.innerText=following?'Following':'Follow';
+ b.style.background=following?'#444':'#3897f0';
+ followersCount+=following?1:-1;
  document.getElementById('followers').innerText=followersCount;
 }
 
@@ -102,62 +101,73 @@ const posts=[
  {img:'post3.jpg',caption:'Christmas is perfect because you are here ❤️‍🩹',likes:3876,comments:[]}
 ];
 
-function openFeed(startIndex){
- const modal=document.getElementById('feedModal');
- modal.innerHTML='';
- modal.style.display='block';
+function openFeed(start){
+ let m=document.getElementById('feedModal');
+ m.innerHTML='';
+ m.style.display='block';
+ document.getElementById('backBtn').style.display='block';
 
  posts.forEach((p,i)=>{
-  const div=document.createElement('div');
-  div.className='feed-post';
-
-  div.innerHTML=`
-   <img src="${p.img}" onclick="tap(${i})">
-   <div class="actions">❤️ 💬 📤</div>
+  let d=document.createElement('div');
+  d.className='feed-post';
+  d.innerHTML=`
+   <div class="heart" id="heart-${i}">❤️</div>
+   <img src="${p.img}" onclick="like(${i})">
    <div class="likes" id="likes-${i}">${p.likes} likes</div>
    <div class="caption"><b>breyny_05</b> ${p.caption}</div>
-   <div class="comments" id="comments-${i}"></div>
    <div class="comment-box">
-     <input placeholder="Add a comment..." id="input-${i}">
+     <input id="input-${i}" placeholder="Add a comment...">
      <button onclick="addComment(${i})">Post</button>
    </div>
-  `;
-
-  modal.appendChild(div);
+   <div id="comments-${i}"></div>`;
+  m.appendChild(d);
  });
+ setTimeout(()=>window.scrollTo(0,start*600),100);
+}
 
- setTimeout(()=>{
-   window.scrollTo({top:startIndex*700,behavior:'smooth'});
- },100);
+function closeFeed(){
+ document.getElementById('feedModal').style.display='none';
+ document.getElementById('backBtn').style.display='none';
 }
 
 let lastTap=0;
-function tap(i){
- let now=new Date().getTime();
+function like(i){
+ let now=Date.now();
  if(now-lastTap<300){
-   posts[i].likes++;
-   document.getElementById(`likes-${i}`).innerText=posts[i].likes+' likes';
+  posts[i].likes++;
+  document.getElementById(`likes-${i}`).innerText=posts[i].likes+' likes';
+  let heart=document.getElementById(`heart-${i}`);
+  heart.style.opacity=1;
+  setTimeout(()=>heart.style.opacity=0,600);
  }
  lastTap=now;
 }
 
 function addComment(i){
  let input=document.getElementById(`input-${i}`);
- let text=input.value;
- if(text.trim()!==''){
-  posts[i].comments.push(text);
-  let container=document.getElementById(`comments-${i}`);
-  container.innerHTML=posts[i].comments.map(c=>`<div><b>user</b> ${c}</div>`).join('');
+ if(input.value.trim()){
+  posts[i].comments.push(input.value);
+  document.getElementById(`comments-${i}`).innerHTML=posts[i].comments.map(c=>`<div><b>user</b> ${c}</div>`).join('');
+  localStorage.setItem('comments',JSON.stringify(posts));
   input.value='';
  }
 }
 
-window.addEventListener('click', function(e){
- if(e.target.id==='feedModal'){
-  document.getElementById('feedModal').style.display='none';
- }
-});
-</script>
+window.onload=()=>{
+ let saved=localStorage.getItem('comments');
+ if(saved) posts.splice(0,posts.length,...JSON.parse(saved));
+};
 
+let startX=0;
+document.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{if(e.changedTouches[0].clientX-startX>100) closeFeed();});
+
+const stories={food:['food1.jpg','food2.jpg','food3.jpg'],hobby:['hobby1.jpg','hobby2.jpg','hobby3.jpg'],movie:['movie1.jpg']};
+let currentStory=[],index=0;
+function openStory(t){currentStory=stories[t];index=0;document.getElementById('storyModal').style.display='flex';document.getElementById('storyImg').src=currentStory[index];}
+function nextStory(){index++;if(index>=currentStory.length)closeStory();else document.getElementById('storyImg').src=currentStory[index];}
+function prevStory(){index--;if(index<0)index=0;document.getElementById('storyImg').src=currentStory[index];}
+function closeStory(){document.getElementById('storyModal').style.display='none';}
+</script>
 </body>
 </html>
